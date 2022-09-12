@@ -1,5 +1,3 @@
-# the initial draft
-
 from datetime import datetime, timedelta
 import os
 import pickle
@@ -7,60 +5,81 @@ import random
 import sys
 
 
-def get_birthdays_per_week(users: list):
+def inserting_info_hot_day(hot_date_weekday: int, happy_users: list, user: dict):
     """
-    The function displays users with birthdays one week ahead of the current day.
-    users =[{'name':'name1', 'birthday':datetime1},{'name':'name2', 'birthday':datetime2}, 
+    Simple function to fill the list of happy users of the next week.
+
+    incoming: hot_date_weekday - digit-day of week, happy_users - list, users - list of dictionaries with keys: "name" and "birthday"
+    return: happy_users - list of happy users of the next week
+    """
+    if hot_date_weekday == 5:
+        hot_date_weekday = 0
+        # to congratulate on Monday, but we need to know when it was
+        add_service_info = "(Saturday), "
+    elif hot_date_weekday == 6:
+        hot_date_weekday = 0
+        # to congratulate on Monday, but we need to know when it was
+        add_service_info = "(Saturday), "
+    else:
+        add_service_info = ", "
+    happy_users.insert(hot_date_weekday, happy_users.pop(
+        hot_date_weekday) + user.get("name") + add_service_info)
+
+    return happy_users
+
+
+def get_birthdays_per_week(users: list, on_date=datetime.now().date()):
+    """
+    The function displays users with birthdays one week ahead of the current day or on date.
+    users =[{'name':'name1', 'birthday':datetime1},{'name':'name2', 'birthday':datetime2},
     ..., {'name':'nameN', 'birthday':datetimeN}]
 
-    incoming: users - list of dictionaries with keys: "name" and "birthday"
+    incoming: users - list of dictionaries with keys: "name" and "birthday", on_date - datetime obj.date()
     return: None
     """
     happy_users = ['Monday: ', 'Tuesday: ',
                    'Wednesday: ', 'Thursday: ', 'Friday: ']
-    current_datetime = datetime.now().date()
-
-    # current_datetime.weekday()  # 0,1,2...6
+    current_datetime = on_date
+    # from next(current) Saturday:
     start_date = current_datetime + \
-        timedelta(days=int(5-current_datetime.weekday())
-                  )  # from next(current) Saturday
-    finish_date = start_date + timedelta(days=6)  # including both
+        timedelta(days=int(5-current_datetime.weekday()))
+    # to next Friday (including both):
+    finish_date = start_date + timedelta(days=6)
+    # for all users:
     for user in users:
         hot_date = user.get("birthday")
-        delta_next_year = 0
-        if hot_date.month == (finish_date.year-start_date.year):
-            delta_next_year = 1
+        # if the week is the last of the year:
+        delta_next_year = 1 if hot_date.month == (
+            finish_date.year-start_date.year) else 0
         hot_date = datetime(year=current_datetime.year + delta_next_year,
                             month=hot_date.month, day=hot_date.day)
         if start_date <= hot_date.date() <= finish_date:
             # if hot_date.weekday() == 5 or hot_date.weekday() == 6:
-            if hot_date.weekday() == 0:
-                happy_users.insert(0, happy_users.pop(0) +
-                                   user.get("name")+", ")
-            if hot_date.weekday() == 1:
-                happy_users.insert(1, happy_users.pop(1) +
-                                   user.get("name")+", ")
-            if hot_date.weekday() == 2:
-                happy_users.insert(2, happy_users.pop(2) +
-                                   user.get("name")+", ")
-            if hot_date.weekday() == 3:
-                happy_users.insert(3, happy_users.pop(3) +
-                                   user.get("name")+", ")
-            if hot_date.weekday() == 4:
-                happy_users.insert(4, happy_users.pop(4) +
-                                   user.get("name")+", ")
-            if hot_date.weekday() == 5:
-                happy_users.insert(0, happy_users.pop(0) +
-                                   user.get("name")+"(Saturday), ")
-            if hot_date.weekday() == 6:
-                happy_users.insert(0, happy_users.pop(0) +
-                                   user.get("name")+"(Sunday), ")
+            happy_users = inserting_info_hot_day(
+                hot_date.weekday(), happy_users, user)
+
     for i in happy_users:
         if i[-2] != ":":
-            print(i+'\n')
-    pass
+            i = i[:-2]
+            print(i)
 
-    # print(happy_users)
+
+def check_user_data(users: list):
+    """
+    for check users data from file.
+
+    incoming: users - must be a list of dictionaries with keys: "name" and "birthday"
+    return: users OR []
+    """
+    if isinstance(users, list) and len(users) > 0:
+        for element in users:
+            if isinstance(element, dict) and isinstance(element.get("name", None), str) and isinstance(element.get("birthday", None), datetime):
+                continue
+            else:
+                return []
+    else:
+        return []
+    return users
 
 
 def load_users_list():
@@ -75,16 +94,14 @@ def load_users_list():
         with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), "users.data"), 'rb') as fh:
             try:
                 users = pickle.load(fh)
-            except:  # ? !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! test and...
+            except Exception:  # ?
                 print('The File is corrupted, my apologies')
-                # create_users_data()
+        users = check_user_data(users)
         if users == []:  # or len(users) < 1
-            print('There no data in File!')
-            # create_users_data()
+            print('There is no valid data in the file!')
     else:
         print('Sorry, but there is no File next to the py-file')
         users = []
-        # create_users_data()
 
     return users
 
@@ -107,6 +124,28 @@ def save_users_list(users: list):
         print("No data to save!")
 
 
+def validate_date(birthday_data: str):
+    """
+    A simple function to validate the date entered by the user
+
+    incoming: birthday_data - strin in format: YYYY-MM-DD
+    return: False if data must be re-entered, else - birthday_data: datetime
+    """
+    birthday_data = birthday_data.split('-')
+    try:
+        birthday_data = datetime(
+            year=int(birthday_data[0]), month=int(birthday_data[1]), day=int(birthday_data[2]))
+        if birthday_data > datetime.now().date():
+            print("No man from the future!")
+
+            return False
+
+    except Exception:
+        return False
+
+    return birthday_data
+
+
 def manual_data_entry(users: list):
     """
     for manual data entry: users
@@ -121,12 +160,11 @@ def manual_data_entry(users: list):
         while answ_finish_input != 'y' or answ_finish_input != 'Y':
             user_name = input('Name of person: ')  # user name
             birthday_data = input('Enter Birthday (YYYY-MM-DD): ')
-            birthday_data = birthday_data.split('-')
-            birthday_data = datetime(
-                year=int(birthday_data[0]), month=int(birthday_data[1]), day=int(birthday_data[2]))
+            birthday_data = validate_date(birthday_data)
+            if not birthday_data:
+                continue
             users.append({'name': user_name, 'birthday': birthday_data})
-            answ_finish_input = input(
-                'Finish entering data? y=Yes, or No?: ')
+            answ_finish_input = input('Finish entering data? y=Yes, or No?: ')
             if answ_finish_input == 'y' or answ_finish_input == 'Y':
                 break
     # save_users_list(users)
@@ -154,7 +192,7 @@ def create_users_data(users=[]):
             answ = int(answ)
             if answ == 1 or answ == 2 or answ == 3:
                 break
-        except:  # ! concretize? too many...
+        except ValueError:  # ! concretize? ValueError, and... too many...
             print('Invalid input, please try again ')
     if answ == 3:
         exit()
@@ -206,31 +244,53 @@ def generator_virtual_persons():
     return users
 
 
+def show_users(users: list):
+    """
+    for print list
+    """
+    if len(users) > 0:
+        for user in users:
+            print(user)
+
+
 def main():
     """
     Basic function to display user birthdays per week.
     The function displays users with birthdays one week ahead of the current day.
-    1 - automatically form a list of users with random date and numbered names
+    1 - automatically form a list of users with random date and numbered names - for example
     0 - manually create a list of users or load from file
     """
     if len(sys.argv) < 2:
         print('No startup parameter entered, must be 1 or 0')
-        users = load_users_list()  # time to test!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        for i in users:
-            print(i)
+
+        # # time to test:
+        users = load_users_list()  # time to test:
+        show_users(users)
         get_birthdays_per_week(users)
+
         exit()
     if sys.argv[1] == "1":
         users = generator_virtual_persons()
         save_users_list(users)
     elif sys.argv[1] == "0":
-        users = create_users_data()
+        users = create_users_data()  # !!!!!!!!!!!!!!!!!!!!! add users as param?
         save_users_list(users)
     else:
         input("Incorrect input start parameters! ")
         exit()
 
-    get_birthdays_per_week(users)
+    while True:
+        specific_date = input(
+            "Press enter for the current date, or enter a specific date (YYYY-MM-DD): ")
+        if len(specific_date) == 0:
+            get_birthdays_per_week(users)  # on_date=datetime.now().date()
+            break
+        else:
+            specific_date = validate_date(specific_date)
+            if not specific_date:
+                continue
+            get_birthdays_per_week(users, specific_date)
+            break
 
 
 if __name__ == "__main__":
