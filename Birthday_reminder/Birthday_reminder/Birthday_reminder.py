@@ -153,20 +153,19 @@ def manual_data_entry(users: list):
     incoming: users - list of dictionaries with keys: "name" and "birthday"
     return: users - list of dictionaries with keys: "name" and "birthday"
     """
-    if users == []:  # or len(users) < 1 ??? remove this if...!!!!!!!!!!
-        # there is no verification of the entered data yet...!!!!!!!!!!!!!!!!!!!!!!!!
-        print('Be very careful when entering the data! ')
-        answ_finish_input = ''
-        while answ_finish_input != 'y' or answ_finish_input != 'Y':
-            user_name = input('Name of person: ')  # user name
-            birthday_data = input('Enter Birthday (YYYY-MM-DD): ')
-            birthday_data = validate_date(birthday_data)
-            if not birthday_data:
-                continue
-            users.append({'name': user_name, 'birthday': birthday_data})
-            answ_finish_input = input('Finish entering data? y=Yes, or No?: ')
-            if answ_finish_input == 'y' or answ_finish_input == 'Y':
-                break
+
+    print('Be very careful when entering the data! ')
+    answ_finish_input = ''
+    while answ_finish_input != 'y' or answ_finish_input != 'Y':
+        user_name = input('Name of person: ')  # user name
+        birthday_data = input('Enter Birthday (YYYY-MM-DD): ')
+        birthday_data = validate_date(birthday_data)
+        if not birthday_data:
+            continue
+        users.append({'name': user_name, 'birthday': birthday_data})
+        answ_finish_input = input('Finish entering data? y=Yes, or No?: ')
+        if answ_finish_input == 'y' or answ_finish_input == 'Y':
+            break
     # save_users_list(users)
 
     return users
@@ -257,14 +256,18 @@ def main():
     """
     Basic function to display user birthdays per week.
     The function displays users with birthdays one week ahead of the current day.
-    1 - automatically form a list of users with random date and numbered names - for example
-    0 - manually create a list of users or load from file
+    1 - automatically form a list of users with random date and numbered names - for example and for testing
+    0 - manually create a list of users (or load from file - next try)
     """
+    users = load_users_list()
+
     if len(sys.argv) < 2:
         print('No startup parameter entered, must be 1 or 0')
-
+        print('1 - automatically form a list of users\n    with random date and numbered names')
+        print('0 - manually create a list of users')
+        input("Incorrect input start parameters! \n Press Enter for EXIT...")
         # # time to test:
-        users = load_users_list()  # time to test:
+        # users = load_users_list()  # time to test:
         show_users(users)
         get_birthdays_per_week(users)
 
@@ -273,7 +276,7 @@ def main():
         users = generator_virtual_persons()
         save_users_list(users)
     elif sys.argv[1] == "0":
-        users = create_users_data()  # !!!!!!!!!!!!!!!!!!!!! add users as param?
+        users = create_users_data(users)
         save_users_list(users)
     else:
         input("Incorrect input start parameters! ")
