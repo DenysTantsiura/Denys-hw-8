@@ -63,10 +63,10 @@ def get_birthdays_per_week(users: list, on_date=datetime.now().date()):
             happy_users = inserting_info_hot_day(
                 hot_date.weekday(), happy_users, user)
 
-    for i in happy_users:
-        if i[-2] != ":":
-            i = i[:-2]
-            print(i)
+    for happy_user in happy_users:
+        if happy_user[-2] != ":":
+            happy_user = happy_user[:-2]
+            print(happy_user)
 
 
 def check_user_data(users: list):
@@ -76,7 +76,7 @@ def check_user_data(users: list):
     incoming: users - must be a list of dictionaries with keys: "name" and "birthday"
     return: users OR []
     """
-    if isinstance(users, list) and len(users) > 0:
+    if isinstance(users, list) and users:
         for element in users:
             if isinstance(element, dict) and isinstance(element.get("name", None), str) and isinstance(element.get("birthday", None), datetime):
                 continue
