@@ -22,8 +22,13 @@ def inserting_info_hot_day(hot_date_weekday: int, happy_users: list, user: dict)
         add_service_info = "(Saturday), "
     else:
         add_service_info = ", "
-    happy_users.insert(hot_date_weekday, happy_users.pop(
-        hot_date_weekday) + user.get("name") + add_service_info)
+    try:
+        happy_user = happy_users.pop(hot_date_weekday)
+    except IndexError:
+        print("Disaster, there is no item to extract!")
+        return happy_users
+    happy_users.insert(hot_date_weekday, happy_user +
+                       user.get("name", 'NONAME') + add_service_info)
 
     return happy_users
 
@@ -51,8 +56,8 @@ def get_birthdays_per_week(users: list, on_date=datetime.now().date()):
         # if the week is the last of the year:
         delta_next_year = 1 if hot_date.month == (
             finish_date.year-start_date.year) else 0
-        hot_date = datetime(year=current_datetime.year + delta_next_year,
-                            month=hot_date.month, day=hot_date.day)
+        hot_date = datetime(year=current_datetime.year +
+                            delta_next_year, month=hot_date.month, day=hot_date.day)
         if start_date <= hot_date.date() <= finish_date:
             # if hot_date.weekday() == 5 or hot_date.weekday() == 6:
             happy_users = inserting_info_hot_day(
@@ -97,7 +102,7 @@ def load_users_list():
             except Exception:  # ?
                 print('The File is corrupted, my apologies')
         users = check_user_data(users)
-        if users == []:  # or len(users) < 1
+        if not users:
             print('There is no valid data in the file!')
     else:
         print('Sorry, but there is no File next to the py-file')
@@ -113,7 +118,7 @@ def save_users_list(users: list):
     incoming: users - list of dictionaries with keys: "name" and "birthday"
     return: None
     """
-    if users != []:
+    if users and isinstance(users, list):
         with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), "users.data"), 'wb') as fh:
             try:
                 pickle.dump(users, fh)
@@ -155,23 +160,23 @@ def manual_data_entry(users: list):
     """
 
     print('Be very careful when entering the data! ')
-    answ_finish_input = ''
-    while answ_finish_input != 'y' or answ_finish_input != 'Y':
+    answer_finish_input = ''
+    while answer_finish_input != 'y' or answer_finish_input != 'Y':
         user_name = input('Name of person: ')  # user name
         birthday_data = input('Enter Birthday (YYYY-MM-DD): ')
         birthday_data = validate_date(birthday_data)
         if not birthday_data:
             continue
         users.append({'name': user_name, 'birthday': birthday_data})
-        answ_finish_input = input('Finish entering data? y=Yes, or No?: ')
-        if answ_finish_input == 'y' or answ_finish_input == 'Y':
+        answer_finish_input = input('Finish entering data? y=Yes, or No?: ')
+        if answer_finish_input == 'y' or answer_finish_input == 'Y':
             break
     # save_users_list(users)
 
     return users
 
 
-def create_users_data(users=[]):
+def create_users_data(users: list):
     """
     Create a test list of users and fill it yourself.
     The function allows you to create a list of users with
@@ -183,21 +188,21 @@ def create_users_data(users=[]):
     return: users - list of dictionaries with keys: "name" and "birthday"
     """
     print('Now need create users list or load from file...')
-    answ = '0'
+    answer = '0'
     while True:
-        answ = input(
+        answer = input(
             '1 - Try load from file "users.data"\n2 - Manual data entry\n3 - exit\n')
         try:
-            answ = int(answ)
-            if answ == 1 or answ == 2 or answ == 3:
-                break
-        except ValueError:  # ! concretize? ValueError, and... too many...
+            answer = int(answer)
+        except ValueError:
             print('Invalid input, please try again ')
-    if answ == 3:
+        if answer in (1, 2, 3):
+            break
+    if answer == 3:
         exit()
-    if answ == 2:
+    if answer == 2:
         users = manual_data_entry(users)
-    if answ == 1:
+    if answer == 1:
         users = load_users_list()
 
     return users
@@ -225,14 +230,13 @@ def random_date(start_month=1, end_month=12, start_day=1, end_day=31, max_year=d
     return datetime(year=Year, month=month, day=day)
 
 
-def generator_virtual_persons():
+def generator_virtual_persons(persons_limit: int):
     """
     For create a test list of users from 144 to 288 (only for test)
 
     return: users - list of dictionaries with keys: "name" and "birthday"
     """
     users = []
-    persons_limit = (random.randint(144, 288) // 12) * 12
     for num in range(persons_limit):
         current_month = 1 + num // (persons_limit // 12)
         start_day = 1 + 7 * (num % 4)
@@ -247,7 +251,7 @@ def show_users(users: list):
     """
     for print list
     """
-    if len(users) > 0:
+    if users:
         for user in users:
             print(user)
 
@@ -273,7 +277,7 @@ def main():
 
         exit()
     if sys.argv[1] == "1":
-        users = generator_virtual_persons()
+        users = generator_virtual_persons(persons_limit=180)
         save_users_list(users)
     elif sys.argv[1] == "0":
         users = create_users_data(users)
