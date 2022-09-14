@@ -27,9 +27,7 @@ def inserting_info_hot_day(hot_date_weekday: int, happy_users: list, user: dict)
     except IndexError:
         print("Disaster, there is no item to extract!")
         return happy_users
-    happy_users.insert(hot_date_weekday, happy_user +
-                       user.get("name", 'NONAME') + add_service_info)
-
+    happy_users.insert(hot_date_weekday, happy_user + user.get("name", 'NONAME') + add_service_info)
     return happy_users
 
 
@@ -46,8 +44,7 @@ def get_birthdays_per_week(users: list, on_date=datetime.now().date()):
                    'Wednesday: ', 'Thursday: ', 'Friday: ']
     current_datetime = on_date
     # from next(current) Saturday:
-    start_date = current_datetime + \
-        timedelta(days=int(5-current_datetime.weekday()))
+    start_date = current_datetime + timedelta(days=int(5-current_datetime.weekday()))
     # to next Friday (including both):
     finish_date = start_date + timedelta(days=6)
     # for all users:
@@ -56,8 +53,7 @@ def get_birthdays_per_week(users: list, on_date=datetime.now().date()):
         # if the week is the last of the year:
         delta_next_year = 1 if hot_date.month == (
             finish_date.year-start_date.year) else 0
-        hot_date = datetime(year=current_datetime.year +
-                            delta_next_year, month=hot_date.month, day=hot_date.day)
+        hot_date = datetime(year=current_datetime.year + delta_next_year, month=hot_date.month, day=hot_date.day)
         if start_date <= hot_date.date() <= finish_date:
             # if hot_date.weekday() == 5 or hot_date.weekday() == 6:
             happy_users = inserting_info_hot_day(
@@ -241,8 +237,7 @@ def generator_virtual_persons(persons_limit: int):
         current_month = 1 + num // (persons_limit // 12)
         start_day = 1 + 7 * (num % 4)
         end_day = start_day + 7  # 7? ! 30+31? -> 8 ) 32 )))
-        users.append(
-            {'name': 'Name_' + str(num), 'birthday': random_date(current_month, current_month, start_day, end_day)})
+        users.append({'name': 'Name_' + str(num), 'birthday': random_date(current_month, current_month, start_day, end_day)})
 
     return users
 
